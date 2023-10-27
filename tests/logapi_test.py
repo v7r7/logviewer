@@ -63,7 +63,7 @@ class LogApiTestCase(TestCase):
     self.assertEqual(response.status_code, 200)
     response_dict = json.loads(response.content)
     self.assertEqual(response_dict['lines'], 1)
-    self.assertEqual(response_dict['logs'][0], '')
+    self.assertEqual(response_dict['logs'][0], 'a')
 
   def test_log_api_empty_file(self):
     response = self.client.get('/api/log/', {'filename': 'empty.txt'})
@@ -77,7 +77,16 @@ class LogApiTestCase(TestCase):
     self.assertEqual(response.status_code, 200)
     response_dict = json.loads(response.content)
     self.assertEqual(response_dict['lines'], 1)
-    self.assertEqual(response_dict['logs'][0], 'single line test')    
+    self.assertEqual(response_dict['logs'][0], 'single line test')
+
+  def test_log_api_omit_empty_lines(self):
+    response = self.client.get('/api/log/', {'filename': 'multiple_newlines.txt'})
+    self.assertEqual(response.status_code, 200)
+    response_dict = json.loads(response.content)
+    self.assertEqual(response_dict['lines'], 3)
+    self.assertEqual(response_dict['logs'][0], 'ghi')
+    self.assertEqual(response_dict['logs'][1], 'def')
+    self.assertEqual(response_dict['logs'][2], 'abc')
 
   def test_log_api_no_file(self):
     response = self.client.get('/api/log/')
@@ -98,4 +107,4 @@ class LogApiTestCase(TestCase):
     response = self.client.get('/api/logs/')
     self.assertEqual(response.status_code, 200)
     response_dict = json.loads(response.content)
-    self.assertEqual(set(response_dict['files']), set(['empty.txt', 'test.txt', 'single_line.txt', 'single_char.txt']))
+    self.assertEqual(set(response_dict['files']), set(['empty.txt', 'test.txt', 'single_line.txt', 'single_char.txt', 'multiple_newlines.txt']))

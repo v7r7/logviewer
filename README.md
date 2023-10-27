@@ -64,7 +64,7 @@ python manage.py test tests.logapi_test
 
 ### `GET /api/log/`
 
-This endpoint allows you to retrieve log lines from a specified log file. The log file can be selected based on the provided parameters.
+This endpoint allows you to retrieve log lines from a specified log file. The log file can be selected based on the provided parameters.  Empty lines are omitted.
 
 #### Parameters
 

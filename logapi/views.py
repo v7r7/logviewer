@@ -50,10 +50,17 @@ def get_log(request):
           curr_char = file.read(1)
           # TODO Support encodings with more than 1 byte per char, ie UTF-16 or japanese
           curr_char = curr_char.decode('utf-8')
+          curr_pos = file.tell()
+
+          if curr_pos == 1:
+            # we've hit the final character, need to append the line
+            final_char = True
+            if curr_char != '\n':
+              curr_line = curr_char + curr_line
 
           # if hit newline, determine whether it passes keyword filter before appending to return
           if curr_char == '\n' or final_char:
-            if not keyword or keyword.lower() in curr_line.lower():
+            if curr_line and (not keyword or keyword.lower() in curr_line.lower()):
               lines_buffer.append(curr_line)
               line_count = line_count + 1
             curr_line = ''
@@ -62,15 +69,9 @@ def get_log(request):
           else:
             curr_line = curr_char + curr_line
 
-          curr_pos = file.tell()
-          if curr_pos == 1:
-            # we've hit the final character, on next iteration, ignore the char read, and
-            # append the line to our buffer to return the final output
-            final_char = True
-          else:
-            # move back max of 2 char since on above file.read(1) we iterate 1 forwards
-            # so every iteration of while loop our cursor -2+1
-            file.seek(-2, os.SEEK_CUR)  
+          # move back max of 2 char since on above file.read(1) we iterate 1 forwards
+          # so every iteration of while loop our cursor -2+1
+          file.seek(-2, os.SEEK_CUR)    
 
         response_data = {
           'lines': line_count,
