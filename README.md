@@ -68,7 +68,7 @@ This endpoint allows you to retrieve log lines from a specified log file. The lo
 
 #### Parameters
 
-- **`filename` (optional)**: The name of the log file to read. If not provided, the default log file is `default.log`.
+- **`filename`**: The name of the log file to read.
 - **`keyword` (optional)**: A keyword to filter log lines. Only lines containing this keyword will be returned. If not provided, all lines will be returned.
 - **`n` (optional)**: The number of log lines to retrieve. Defaults to 100 if not provided.
 
@@ -95,7 +95,7 @@ GET /api/log/?filename=mylog.log&keyword=error&n=50
 
 ### `GET /api/logs/`
 
-This endpoint allows you to retrieve a list of log files available in the system.
+This endpoint allows you to retrieve a list of log files with .txt and .log extensions available in /var/log directory
 
 #### Example Request
 
@@ -120,4 +120,4 @@ GET /api/logs/
 
 **Note**: 
 - For the `/api/log/` endpoint, the response contains the specified number of log lines (`n`) from the selected log file that match the provided keyword. If no keyword is provided, all lines are returned. If the file is empty or does not exist, an empty response is returned.
-- For the `/api/logs/` endpoint, the response contains a list of log files available in the system. If no log files are found, an empty list is returned.
+- For the `/api/logs/` endpoint, the response contains a list of log files available in the system with .txt or .log extensions. If no log files are found, an empty list is returned.

@@ -5,14 +5,24 @@ from django.http import JsonResponse
 
 from .constants import LOGS_DIRECTORY
 
+ALLOWED_EXTENSIONS = ('.txt', '.log')
+
 def get_log_filenames(request):
   files = os.listdir(LOGS_DIRECTORY)
+  filtered_files = [file for file in files if file.endswith(ALLOWED_EXTENSIONS)]
   return JsonResponse({'files': files})
 
 def get_log(request):
-  filename = request.GET.get('filename', 'default.log')
+  filename = request.GET.get('filename')
+  if not filename:
+    return JsonResponse({'error': 'Must provide filename parameter'}, status=404)
+
   keyword = request.GET.get('keyword', '')
-  last_n_lines = int(request.GET.get('n', 100))
+
+  str_n_lines = request.GET.get('n', '100')
+  if not str_n_lines.isdigit():
+    return JsonResponse({'error': 'Param n must be digit'}, status=422)
+  last_n_lines = int(str_n_lines)
   file_path = os.path.join(LOGS_DIRECTORY, filename)
   logging.info("Reading file %s, keyword: %s, lines: %s", file_path, keyword, last_n_lines)
 
