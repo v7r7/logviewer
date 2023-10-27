@@ -6,7 +6,7 @@ from django.test import TestCase
 
 class LogApiTestCase(TestCase):
 
-  def test_log_api_endpoint(self):
+  def test_log_api(self):
     response = self.client.get('/api/log/', {'filename': 'test.txt'})
     self.assertEqual(response.status_code, 200)
     response_dict = json.loads(response.content)
@@ -46,6 +46,7 @@ class LogApiTestCase(TestCase):
     self.assertEqual(response_dict['lines'], 1)
     self.assertEqual(response_dict['logs'][0], 'single line test')    
 
-    
-
-    
+  def test_files_api(self):
+    response = self.client.get('/api/logs/')
+    response_dict = json.loads(response.content)
+    self.assertEqual(set(response_dict['files']), set(['empty.txt', 'test.txt', 'single_line.txt', 'single_char.txt']))
