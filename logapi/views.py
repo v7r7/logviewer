@@ -1,9 +1,11 @@
 import os
 import logging
+import traceback
 
 from django.http import JsonResponse
 
 from .constants import LOGS_DIRECTORY
+from .util import is_not_start_byte
 
 ALLOWED_EXTENSIONS = ('.txt', '.log')
 
@@ -47,15 +49,32 @@ def get_log(request):
         file.seek(-1, os.SEEK_CUR)
 
       while line_count < last_n_lines:
-        curr_byte = file.read(1)
-        # TODO Support encodings with more than 1 byte per char, ie non ascii, japanese
-        curr_char = curr_byte.decode('utf-8')
+        byte_length = 1
+        curr_bytes = file.read(1)
+
+        # From https://en.wikipedia.org/wiki/UTF-8#Encoding
+        # UTF-8 chars can be up to 4 bytes, if the current byte is not a start byte
+        # we need to iterate back 1 char further and potentially read multiple bytes
+        # for a single character
+        first_byte = int.from_bytes(curr_bytes, byteorder='big')
+
+        while is_not_start_byte(first_byte) and byte_length < 4:
+          byte_length = byte_length + 1
+          file.seek(-byte_length, os.SEEK_CUR)
+          curr_bytes = file.read(byte_length)
+          first_byte = curr_bytes[0]
+
+        if byte_length > 1:
+          file.seek(1-byte_length, os.SEEK_CUR)  
+
+        # TODO Support other encodings besides just utf-8
+        curr_char = curr_bytes.decode('utf-8')
         curr_pos = file.tell()
 
         if curr_char != '\n':
           curr_line = curr_char + curr_line
 
-        if curr_pos == 1:
+        if curr_pos <= byte_length:
           # we've hit the final character, need to append the line
           final_char = True
 
@@ -81,5 +100,5 @@ def get_log(request):
   except FileNotFoundError:
       return JsonResponse({'error': 'File not found'}, status=404)
   except Exception as e:
-      logging.error('An unexpected error occured', e)
+      traceback.print_exc()
       return JsonResponse({'error': str(e)}, status=500)

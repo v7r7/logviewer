@@ -1,10 +1,12 @@
 import json
 import os
 import unittest
+import logging
 
 from django.test import TestCase
 
 class LogApiTestCase(TestCase):
+  logging.disable(logging.WARNING)
 
   def test_log_api(self):
     response = self.client.get('/api/log/', {'filename': 'test.txt'})
@@ -88,6 +90,15 @@ class LogApiTestCase(TestCase):
     self.assertEqual(response_dict['logs'][1], 'def')
     self.assertEqual(response_dict['logs'][2], 'abc')
 
+  def test_log_api_special_chars(self):
+    response = self.client.get('/api/log/', {'filename': 'special_chars.txt'})
+    self.assertEqual(response.status_code, 200)
+    response_dict = json.loads(response.content)
+    self.assertEqual(response_dict['lines'], 3)
+    self.assertEqual(response_dict['logs'][0], 'مرحبا بك في عالم البرمجة')
+    self.assertEqual(response_dict['logs'][1], '😀😍🎉こんにちはありがとうèéüßñ')   
+    self.assertEqual(response_dict['logs'][2], '机会总是留给有准备的人')   
+
   def test_log_api_no_file(self):
     response = self.client.get('/api/log/')
     self.assertEqual(response.status_code, 404)
@@ -107,4 +118,5 @@ class LogApiTestCase(TestCase):
     response = self.client.get('/api/logs/')
     self.assertEqual(response.status_code, 200)
     response_dict = json.loads(response.content)
-    self.assertEqual(set(response_dict['files']), set(['empty.txt', 'test.txt', 'single_line.txt', 'single_char.txt', 'multiple_newlines.txt']))
+    expected_files = set(['empty.txt', 'test.txt', 'single_line.txt', 'single_char.txt', 'multiple_newlines.txt', 'special_chars.txt'])
+    self.assertEqual(set(response_dict['files']), expected_files)
