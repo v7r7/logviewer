@@ -60,6 +60,12 @@ To run the tests for the LogViewer application, use the following command:
 python manage.py test tests.logapi_test
 ```
 
+To run a single test specify the path of the test, such as in the following command
+
+```bash
+python manage.py test tests.logapi_test.LogApiTestCase.test_log_api_case_insensitive
+```
+
 ## API Documentation
 
 ### `GET /api/log/`
@@ -69,8 +75,9 @@ This endpoint allows you to retrieve log lines from a specified log file. The lo
 #### Parameters
 
 - **`filename`**: The name of the log file to read.
-- **`keyword` (optional)**: A keyword to filter log lines. The filter is case insensitive.  Only lines containing this keyword will be returned. If not provided, all lines will be returned.
-- **`n` (optional)**: The number of log lines to retrieve. Defaults to 100 if not provided.
+- **`keyword` (optional)**: A keyword to filter log lines. The filter is case insensitive by default.  Only lines containing this keyword will be returned. If not provided, all lines will be returned.
+- **`c` (optional)**: Specify any value (such as 1) to enable case sensitive keyword search.  Defaults to case insensitive search.
+- **`n` (optional)**: The number of log lines to retrieve. Defaults to 100 if not provided.  Maximum of 50000 lines.
 
 #### Example Request
 
@@ -121,3 +128,4 @@ GET /api/logs/
 **Note**: 
 - For the `/api/log/` endpoint, the response contains the specified number of log lines (`n`) from the selected log file that match the provided keyword. If no keyword is provided, all lines are returned. If the file is empty or does not exist, an empty response is returned.
 - For the `/api/logs/` endpoint, the response contains a list of log files available in the system with .txt or .log extensions. If no log files are found, an empty list is returned.
+- We assume all files being read are encoded in UTF-8.

@@ -8,6 +8,8 @@ from .constants import LOGS_DIRECTORY
 from .util import is_not_start_byte
 
 ALLOWED_EXTENSIONS = ('.txt', '.log')
+MAX_LINES = 50000
+DEFAULT_LINES = 100
 
 def get_log_filenames(request):
   files = os.listdir(LOGS_DIRECTORY)
@@ -23,14 +25,18 @@ def get_log(request):
     return JsonResponse({'error': 'Param filename must have one of the extensions %s' % str(ALLOWED_EXTENSIONS)}, status=422)
 
   keyword = request.GET.get('keyword', '')
-  str_n_lines = request.GET.get('n', '100')
+  case_sensitive = request.GET.get('c', '')
+  if not case_sensitive:
+    keyword = keyword.lower()
+
+  str_n_lines = request.GET.get('n', str(DEFAULT_LINES))
   if not str_n_lines.isdigit():
     return JsonResponse({'error': 'Param n must be digit'}, status=422)
-  last_n_lines = int(str_n_lines)
+  n_lines = min(int(str_n_lines), MAX_LINES)
 
   # Only use base file name to prevent accessing relative path / other folders
   file_path = os.path.join(LOGS_DIRECTORY, os.path.basename(filename))
-  logging.info("Reading file %s, keyword: %s, lines: %s", file_path, keyword, last_n_lines)
+  logging.info("Reading file %s, keyword: %s, lines: %s", file_path, keyword, n_lines)
 
   try:
     with open(file_path, 'rb') as file:
@@ -42,18 +48,19 @@ def get_log(request):
       curr_pos = file.tell()
       final_char = False
 
-      # the file is empty, just return empty json response here by setting last_n_lines to -1
+      # the file is empty, just return empty json response here by setting n_lines to -1
       if curr_pos == 0:
-        last_n_lines = -1
+        n_lines = -1
       else:  
         # Move file cursor to 1 char before end of file, so we can read last char
         file.seek(-1, os.SEEK_CUR)
 
-      while line_count < last_n_lines:
+      while line_count < n_lines:
         byte_length = 1
         curr_bytes = file.read(1)
 
         # From https://en.wikipedia.org/wiki/UTF-8#Encoding
+        # We assume this text file is encoded in UTF-8
         # UTF-8 chars can be up to 4 bytes, if the current byte is not a start byte
         # we need to iterate back 1 char further and potentially read multiple bytes
         # for a single character
@@ -68,7 +75,10 @@ def get_log(request):
         if byte_length > 1:
           file.seek(1-byte_length, os.SEEK_CUR)  
 
-        # TODO Support other encodings besides just utf-8
+        # We assume this is UTF-8, to handle other encodings we could
+        # read the first line of the file and guess (can't be certain) the encoding based off of presence of 
+        # byte order marks and other languages, something like the implementation here
+        # https://github.com/gignupg/Detect-File-Encoding-And-Language/blob/c21e9907436b62deab21e7803ae55d34b5a82dbc/src/index-node.js#L45
         curr_char = curr_bytes.decode('utf-8')
         curr_pos = file.tell()
 
@@ -81,7 +91,11 @@ def get_log(request):
 
         append_line = curr_char == '\n' or final_char 
         if append_line:
-          if curr_line and (not keyword or keyword.lower() in curr_line.lower()):
+          if not case_sensitive:
+            keyword_match_line = curr_line.lower()
+          else:
+            keyword_match_line = curr_line 
+          if curr_line and (not keyword or keyword in keyword_match_line):
             lines_buffer.append(curr_line)
             line_count = line_count + 1
           curr_line = ''
@@ -99,7 +113,9 @@ def get_log(request):
       }
       return JsonResponse(response_data)
   except FileNotFoundError:
+      logging.error('Could not find file %s', filename)
       return JsonResponse({'error': 'File not found'}, status=404)
   except Exception as e:
       traceback.print_exc()
+      logging.error("Unexpected error occured", e)
       return JsonResponse({'error': str(e)}, status=500)

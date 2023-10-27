@@ -16,7 +16,7 @@ class LogApiTestCase(TestCase):
     self.assertEqual(response_dict['lines'], 10)
     self.assertEqual(len(response_dict['logs']), 10)
     self.assertEqual(response_dict['logs'][0], 'Test line 10')
-    self.assertEqual(response_dict['logs'][9], 'Test line 1')
+    self.assertEqual(response_dict['logs'][9], 'TEST line 1')
 
   def test_log_api_n_lines_param(self):
     response = self.client.get('/api/log/', {'filename': 'test.txt', 'n': 5})
@@ -34,7 +34,7 @@ class LogApiTestCase(TestCase):
     self.assertEqual(response_dict['lines'], 2)
     self.assertEqual(len(response_dict['logs']), 2)
     self.assertEqual(response_dict['logs'][0], 'Test line 10')
-    self.assertEqual(response_dict['logs'][1], 'Test line 1')
+    self.assertEqual(response_dict['logs'][1], 'TEST line 1')
 
   def test_log_api_keyword_n_lines(self):
     response = self.client.get('/api/log/', {'filename': 'test.txt', 'keyword': '1', 'n': 1})
@@ -52,13 +52,31 @@ class LogApiTestCase(TestCase):
     self.assertEqual(len(response_dict['logs']), 0)
 
   def test_log_api_case_insensitive(self):
-    response = self.client.get('/api/log/', {'filename': 'test.txt', 'keyword': 'TEST', 'n': 3})
+    response = self.client.get('/api/log/', {'filename': 'test.txt', 'keyword': 'TEST', 'n': '3'})
     self.assertEqual(response.status_code, 200)
     response_dict = json.loads(response.content)
     self.assertEqual(response_dict['lines'], 3)
     self.assertEqual(response_dict['logs'][0], 'Test line 10')
-    self.assertEqual(response_dict['logs'][1], 'Test line 9')
+    self.assertEqual(response_dict['logs'][1], 'TEST line 9')
     self.assertEqual(response_dict['logs'][2], 'Test line 8')
+
+  def test_log_api_case_sensitive(self):
+    response = self.client.get('/api/log/', {'filename': 'test.txt', 'keyword': 'TEST', 'n': '3', 'c': '1'})
+    self.assertEqual(response.status_code, 200)
+    response_dict = json.loads(response.content)
+    self.assertEqual(response_dict['lines'], 3)
+    self.assertEqual(len(response_dict['logs']), 3)
+    self.assertEqual(response_dict['logs'][0], 'TEST line 9')
+    self.assertEqual(response_dict['logs'][1], 'TEST line 7')
+    self.assertEqual(response_dict['logs'][2], 'TEST line 5')
+    response = self.client.get('/api/log/', {'filename': 'test.txt', 'keyword': 'Test', 'n': '3', 'c': '1'})
+    self.assertEqual(response.status_code, 200)
+    response_dict = json.loads(response.content)
+    self.assertEqual(response_dict['lines'], 3)
+    self.assertEqual(len(response_dict['logs']), 3)
+    self.assertEqual(response_dict['logs'][0], 'Test line 10')
+    self.assertEqual(response_dict['logs'][1], 'Test line 8')
+    self.assertEqual(response_dict['logs'][2], 'Test line 6')
 
   def test_log_api_single_char(self):
     response = self.client.get('/api/log/', {'filename': 'single_char.txt'})
