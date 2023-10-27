@@ -99,6 +99,18 @@ class LogApiTestCase(TestCase):
     self.assertEqual(response_dict['logs'][1], '😀😍🎉こんにちはありがとうèéüßñ')   
     self.assertEqual(response_dict['logs'][2], '机会总是留给有准备的人')   
 
+  def test_log_api_base_file_name(self):
+    response = self.client.get('/api/log/', {'filename': '../../test.txt'})
+    self.assertEqual(response.status_code, 200)
+    response_dict = json.loads(response.content)
+    self.assertEqual(response_dict['lines'], 10)
+
+  def test_log_api_base_file_name_sub_folder(self):
+    response = self.client.get('/api/log/', {'filename': 'test/test/test.txt'})
+    self.assertEqual(response.status_code, 200)
+    response_dict = json.loads(response.content)
+    self.assertEqual(response_dict['lines'], 10)
+
   def test_log_api_no_file(self):
     response = self.client.get('/api/log/')
     self.assertEqual(response.status_code, 404)

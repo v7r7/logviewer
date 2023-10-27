@@ -28,7 +28,8 @@ def get_log(request):
     return JsonResponse({'error': 'Param n must be digit'}, status=422)
   last_n_lines = int(str_n_lines)
 
-  file_path = os.path.join(LOGS_DIRECTORY, filename)
+  # Only use base file name to prevent accessing relative path / other folders
+  file_path = os.path.join(LOGS_DIRECTORY, os.path.basename(filename))
   logging.info("Reading file %s, keyword: %s, lines: %s", file_path, keyword, last_n_lines)
 
   try:
