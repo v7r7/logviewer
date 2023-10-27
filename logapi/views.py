@@ -10,7 +10,7 @@ ALLOWED_EXTENSIONS = ('.txt', '.log')
 def get_log_filenames(request):
   files = os.listdir(LOGS_DIRECTORY)
   filtered_files = [file for file in files if file.endswith(ALLOWED_EXTENSIONS)]
-  return JsonResponse({'files': files})
+  return JsonResponse({'files': filtered_files})
 
 def get_log(request):
   filename = request.GET.get('filename')
