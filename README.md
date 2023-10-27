@@ -12,7 +12,7 @@ LogViewer is a simple Django web application for on-demand monitoring of Unix-ba
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/logviewer.git
+   git clone https://github.com/v7r7/logviewer.git
    cd logviewer
    ```
 
@@ -69,13 +69,13 @@ This endpoint allows you to retrieve log lines from a specified log file. The lo
 #### Parameters
 
 - **`filename`**: The name of the log file to read.
-- **`keyword` (optional)**: A keyword to filter log lines. Only lines containing this keyword will be returned. If not provided, all lines will be returned.
+- **`keyword` (optional)**: A keyword to filter log lines. The filter is case insensitive.  Only lines containing this keyword will be returned. If not provided, all lines will be returned.
 - **`n` (optional)**: The number of log lines to retrieve. Defaults to 100 if not provided.
 
 #### Example Request
 
 ```
-GET /api/log/?filename=mylog.log&keyword=error&n=50
+GET /api/log/?filename=mylog.log&keyword=ERROR&n=50
 ```
 
 #### Example Response

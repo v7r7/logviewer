@@ -17,6 +17,9 @@ def get_log(request):
   if not filename:
     return JsonResponse({'error': 'Must provide filename parameter'}, status=404)
 
+  if not filename.endswith(ALLOWED_EXTENSIONS):
+    return JsonResponse({'error': 'Param filename must have one of the extensions %s' % str(ALLOWED_EXTENSIONS)}, status=422)
+
   keyword = request.GET.get('keyword', '')
 
   str_n_lines = request.GET.get('n', '100')
@@ -50,7 +53,7 @@ def get_log(request):
 
           # if hit newline, determine whether it passes keyword filter before appending to return
           if curr_char == '\n' or final_char:
-            if not keyword or keyword in curr_line:
+            if not keyword or keyword.lower() in curr_line.lower():
               lines_buffer.append(curr_line)
               line_count = line_count + 1
             curr_line = ''
