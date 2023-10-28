@@ -72,30 +72,28 @@ def get_log(request):
           curr_bytes = file.read(byte_length)
           first_byte = curr_bytes[0]
 
-        if byte_length > 1:
-          file.seek(1-byte_length, os.SEEK_CUR)  
-
         # We assume this is UTF-8, to handle other encodings we could
         # read the first line of the file and guess (can't be certain) the encoding based off of presence of 
         # byte order marks and other languages, something like the implementation here
         # https://github.com/gignupg/Detect-File-Encoding-And-Language/blob/c21e9907436b62deab21e7803ae55d34b5a82dbc/src/index-node.js#L45
         curr_char = curr_bytes.decode('utf-8')
-        curr_pos = file.tell()
 
         if curr_char != '\n':
           curr_line = curr_char + curr_line
 
+        curr_pos = file.tell()
         if curr_pos <= byte_length:
           # we've hit the final character, need to append the line
           final_char = True
 
-        append_line = curr_char == '\n' or final_char 
-        if append_line:
+        end_of_line = curr_char == '\n' or final_char 
+        if end_of_line:
           if not case_sensitive:
             keyword_match_line = curr_line.lower()
           else:
-            keyword_match_line = curr_line 
-          if curr_line and (not keyword or keyword in keyword_match_line):
+            keyword_match_line = curr_line
+          # if no keyword, the keyword match always returns true
+          if curr_line and keyword in keyword_match_line:
             lines_buffer.append(curr_line)
             line_count = line_count + 1
           curr_line = ''
@@ -103,9 +101,8 @@ def get_log(request):
         if final_char:
           break  
 
-        # move back max of 2 bytes since on above file.read(1) we iterate 1 forwards
-        # so every iteration of while loop our cursor -2+1=-1 byte backwards
-        file.seek(-2, os.SEEK_CUR)    
+        # move cursor back to 1 byte before the character we just read
+        file.seek(-(byte_length + 1), os.SEEK_CUR)
 
       response_data = {
         'lines': line_count,
